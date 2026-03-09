@@ -12,8 +12,9 @@ Run the command → read the `status` → follow `next_steps`. That's it.
 ## Commands Reference
 
 ```bash
-retrospark init --json                                               # Initialize the brain directory and configure Git tracking.
+retrospark init --json                                               # Initialize brain. Auto-discovers remote URL from root `config.yaml`.
 retrospark init --remote-url "git@github.com:..." --json             # Initialize with an explicit upstream remote.
+retrospark init --skill github_skill --json                          # Initialize and pull remote URL from a specific skill manifest.
 retrospark sync --source antigravity --json                          # Sync Google Antigravity sessions into the brain.
 retrospark sync --source claude --json                               # Sync Claude Code sessions.
 retrospark sync --source gemini --json                               # Sync Gemini CLI sessions.
@@ -55,3 +56,15 @@ Example error response:
 - **Source is Required**: `retrospark sync` will fail if `--source` is not explicitly provided.
 - **Uninitialized Directory**: If the tool says the Brain is not initialized, run `retrospark init --json`.
 - **Git Push Failures**: If `git_status` has an error regarding upstream credentials, inform the user but acknowledge that the Markdown extraction still succeeded locally!
+
+## Supervised Export for Antigravity
+
+Google Antigravity chat histories are encrypted and cannot be read directly from `.pb` logs. 
+
+**Workflow for Antigravity:**
+1. Run `retrospark sync --source antigravity --json`.
+2. If the response indicates `0 sessions` or `0 messages` for a known active session:
+   - Use the **`antigravity_exporter`** skill (see `.agents/workflows/antigravity_exporter.md`) to export your current memory as JSON.
+   - Save the JSON to `data/antigravity/conversation/chat_history_<UUID>.json`.
+   - Re-run `retrospark sync --source antigravity --json`.
+3. RetroSpark will now merge your exported messages with the brain artifacts.

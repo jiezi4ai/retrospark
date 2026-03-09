@@ -1,9 +1,9 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 import json
 
-def format_session_to_markdown(session: Dict[str, Any]) -> str:
-    """Convert a parsed session dictionary into a formatted Markdown string."""
+def format_session_to_markdown(session: Dict[str, Any], context_artifacts: Optional[List[Dict[str, str]]] = None) -> str:
+    """Convert a parsed session dictionary into a formatted Markdown string, optionally including context artifacts."""
     
     # 1. Extract metadata and stats
     session_id = session.get("session_id", "Unknown")
@@ -46,6 +46,25 @@ def format_session_to_markdown(session: Dict[str, Any]) -> str:
     md_lines.append(f"# 🧠 Session: {project}")
     md_lines.append(f"**Date:** {date_str} | **Model:** `{model}`")
     md_lines.append("")
+
+    # --- NEW: Project Context Integration ---
+    if context_artifacts:
+        md_lines.append("## 📜 Project Context")
+        md_lines.append("Relevant planning and design documents from this workspace.")
+        md_lines.append("")
+        for art in context_artifacts:
+            title = art.get("title", "Artifact")
+            content = art.get("content", "")
+            if content:
+                md_lines.append(f"<details><summary>📄 {title}</summary>")
+                md_lines.append("")
+                md_lines.append(content.strip())
+                md_lines.append("")
+                md_lines.append("</details>")
+        md_lines.append("")
+        md_lines.append("---")
+        md_lines.append("")
+
     md_lines.append("---")
     md_lines.append("")
 

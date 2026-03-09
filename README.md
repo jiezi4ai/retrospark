@@ -16,18 +16,18 @@ STEP 1 — INSTALL OR VERIFY
 
 STEP 2 — INITIALIZE YOUR BRAIN
   Run `retrospark init --json`
-  This configures the local `.retrospark/brain` directory for Markdown storage and Git tracking. Follow any interactive or JSON instructions it returns.
+  RetroSpark will automatically discover your remote repository from `config.yaml` if present. This configures the local `.retrospark/brain` directory for Markdown storage and Git tracking.
 
 STEP 3 — SYNC SESSIONS
   For manual invocation: `retrospark sync --source <your_ai_tool> --json`
   (e.g., `retrospark sync --source claude --json`, `retrospark sync --source antigravity --json`)
-   RetroSpark will scan your AI tool's native history logs, sanitize PII/Secrets, convert discussions to Markdown with YAML frontmatter analytics, and Git Commit + Push the results automatically.
+   RetroSpark will scan history logs, sanitize PII, integrate project artifacts (plans, logs) into the final Markdown, and Git Commit + Push automatically.
   
   Read the JSON output:
   - If `status == "success"`, inform the user that the sync is complete.
   - If `status == "error"`, read the `message` field and inform the user of the failure.
 
-IMPORTANT: Always pass the `--json` flag so that you receive machine-readable output. 
+IMPORTANT: Always pass the `--json` flag for machine-readable output. 
 ```
 
 ## Manual Usage (Without an Agent)

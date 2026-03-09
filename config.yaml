@@ -1,0 +1,15 @@
+# for github init
+name: "GitHub Issue Manager"
+description: "for github backup of data"
+api_base_url: "https://api.github.com"
+required_secrets:
+  - env_name: "GITHUB_TOKEN"
+    description: "GitHub personal token with repo access"
+github_repo: 
+  - remote_url: "" 
+    description: "your corresponding github repo to save conversation history data"
+
+# for antigravity
+antigravity:
+- history_path: "./artifacts/"
+  description: "path for converted chat history in Json format."

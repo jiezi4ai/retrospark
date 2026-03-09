@@ -21,6 +21,8 @@ from retrospark.extractors.parser import (
 from retrospark.markdown.transformer import format_session_to_markdown
 from retrospark.privacy.anonymizer import Anonymizer
 from retrospark.vcs.git_manager import init_repo, sync_repo
+from retrospark.skills.manager import SkillManager
+from retrospark.extractors.antigravity import ANTIGRAVITY_DIR
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -47,13 +49,75 @@ def main():
     pass
 
 @main.command()
-@click.option("--remote-url", prompt="GitHub Remote URL (optional)", default="", help="The remote repository URL.")
+@click.option("--remote-url", default="", help="The remote repository URL.")
+@click.option("--skill", default=None, help="Automatically configure remote URL from a skill manifest.")
 @click.option("--json", "force_json", is_flag=True, help="Force JSON output for Agent execution.")
-def init(remote_url, force_json):
+def init(remote_url, skill, force_json):
     """Initialize RetroSpark and GitHub repository."""
     config = load_config()
     brain_dir = get_brain_dir()
     
+    # 1. Check for manual skill discovery if none provided
+    if not skill and not remote_url: # Only check config.yaml if no skill or remote_url is explicitly given
+        local_config_path = Path("config.yaml")
+        if local_config_path.exists():
+            if not force_json and sys.stdout.isatty():
+                click.secho("🔍 Found local config.yaml, attempting to auto-discover remote URL...", fg="blue")
+            
+            # Load the config.yaml as a SkillManifest
+            try:
+                manager = SkillManager(Path.cwd() / "skills")
+                manifest = manager.load_config(local_config_path)
+                if manifest and manifest.remote_url:
+                    remote_url = manifest.remote_url
+                    if not force_json and sys.stdout.isatty():
+                        click.secho(f"✨ Discovered remote URL from config.yaml: {remote_url}", fg="green")
+            except Exception as e:
+                if not force_json and sys.stdout.isatty():
+                    click.secho(f"⚠️  Could not parse config.yaml: {e}", fg="yellow")
+
+    # 2. Discover from specified skill if provided and remote_url is still not set
+    if skill and not remote_url:
+        manager = SkillManager(Path.cwd() / "skills")
+        manifest = manager.load_manifest(skill)
+        if manifest and manifest.remote_url:
+            remote_url = manifest.remote_url
+            if not force_json and sys.stdout.isatty():
+                click.secho(f"🔍 Auto-discovered remote URL from skill '{skill}': {remote_url}", fg="blue")
+        elif not force_json and sys.stdout.isatty():
+            click.secho(f"⚠️  Skill '{skill}' not found or has no remote_url defined.", fg="yellow")
+
+    # Check if already initialized
+    already_initialized = brain_dir.exists() and (brain_dir / ".git").exists()
+    
+    # Check existing remote
+    existing_remote = config.get("remote_url")
+    
+    if already_initialized:
+        if remote_url and remote_url != existing_remote:
+            if not force_json and sys.stdout.isatty():
+                click.secho(f"🔄 Updating remote URL to: {remote_url}", fg="yellow")
+            config["remote_url"] = remote_url
+            save_config(config)
+            init_repo(brain_dir, remote_url)
+            output = {
+                "status": "success",
+                "message": f"RetroSpark remote URL updated to {remote_url}.",
+                "brain_dir": str(brain_dir),
+                "remote_url": remote_url
+            }
+        else:
+            output = {
+                "status": "success",
+                "message": "RetroSpark is already initialized.",
+                "brain_dir": str(brain_dir),
+                "remote_url": existing_remote or "None",
+                "next_steps": "You are ready to run `retrospark sync`."
+            }
+        print_output(output, force_json)
+        return
+
+    # First time initialization
     if remote_url:
         config["remote_url"] = remote_url
     
@@ -141,8 +205,26 @@ def sync(project, source, force_json):
         target_dir = brain_dir / proj_source / display_name
         target_dir.mkdir(parents=True, exist_ok=True)
         
+        # Discovery context artifacts for Antigravity
+        context_artifacts = []
+        if proj_source == ANTIGRAVITY_SOURCE:
+            # dir_name for antigravity is the session ID (UUID)
+            brain_path = ANTIGRAVITY_DIR / dir_name
+            if brain_path.exists():
+                # We specifically look for the core artifacts
+                for art_name in ["implementation_plan.md", "task.md", "walkthrough.md"]:
+                    art_file = brain_path / art_name
+                    if art_file.exists():
+                        try:
+                            context_artifacts.append({
+                                "title": art_name.replace(".md", "").replace("_", " ").title(),
+                                "content": art_file.read_text()
+                            })
+                        except Exception as e:
+                            logging.warning(f"Failed to read artifact {art_name}: {e}")
+
         for session in sessions:
-            markdown_content = format_session_to_markdown(session)
+            markdown_content = format_session_to_markdown(session, context_artifacts=context_artifacts)
             
             # Use timestamp or session ID for filename
             start_time = session.get("start_time")
