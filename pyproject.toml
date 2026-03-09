@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "retrospark"
 version = "0.1.0"
-description = "A Vibe Coding digital second brain that extracts and versions LLM interactions."
+description = "Review, rethink, reinvent with AI."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [

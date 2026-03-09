@@ -1,4 +1,8 @@
-# RetroSpark 项目说明书
+# RetroSpark (retrospark) 项目说明书
+
+> **Review, rethink, reinvent with AI**
+> - 温故知新：用 AI 重新审视、思考与创造
+> - 溯言过往，重塑认知
 
 ## 📌 摘要 (Summary)
 

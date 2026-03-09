@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 import click
 
-from retrospark.config import load_config, save_config, get_brain_dir, DEFAULT_BRAIN_DIR
+from retrospark.config import load_config, save_config, get_interaction_dir, DEFAULT_INTERACTION_DIR
 from retrospark.extractors.parser import (
     discover_projects, 
     parse_project_sessions, 
@@ -26,7 +26,7 @@ from retrospark.extractors.antigravity import ANTIGRAVITY_DIR
 
 logging.basicConfig(level=logging.ERROR)
 
-VALID_SOURCES = ["antigravity", "claude", "codex", "gemini", "opencode", "openclaw", "all"]
+VALID_SOURCES = ["antigravity", "claude", "codex", "gemini", "opencode", "openclaw", "kimi", "all"]
 
 def print_output(data, force_json):
     """Outputs data either as JSON or as a human-readable string depending on the environment."""
@@ -45,7 +45,7 @@ def print_output(data, force_json):
 
 @click.group()
 def main():
-    """RetroSpark CLI - Vibe Coding Digital Second Brain."""
+    """RetroSpark (retrospark) - Review, rethink, reinvent with AI."""
     pass
 
 @main.command()
@@ -55,7 +55,7 @@ def main():
 def init(remote_url, skill, force_json):
     """Initialize RetroSpark and GitHub repository."""
     config = load_config()
-    brain_dir = get_brain_dir()
+    interaction_dir = get_interaction_dir()
     
     # 1. Check for manual skill discovery if none provided
     if not skill and not remote_url: # Only check config.yaml if no skill or remote_url is explicitly given
@@ -95,29 +95,37 @@ def init(remote_url, skill, force_json):
         click.secho(f"ℹ️  GITHUB_LLM_SYNC_TOKEN not found in environment. Git push might require manual auth.", fg="yellow")
 
     # Check if already initialized
-    already_initialized = brain_dir.exists() and (brain_dir / ".git").exists()
+    already_initialized = interaction_dir.exists() and (interaction_dir / ".git").exists()
     
-    # Check existing remote
-    existing_remote = config.get("remote_url")
+    # Check existing remote from github_repo
+    github_cfg = config.get("github_repo", {})
+    existing_remote = github_cfg.get("remote_url") if isinstance(github_cfg, dict) else None
     
     if already_initialized:
         if remote_url and remote_url != existing_remote:
             if not force_json and sys.stdout.isatty():
                 click.secho(f"🔄 Updating remote URL to: {remote_url[:20]}...", fg="yellow")
-            config["remote_url"] = remote_url
+            
+            if not isinstance(github_cfg, dict):
+                github_cfg = {}
+            github_cfg["remote_url"] = remote_url
+            config["github_repo"] = github_cfg
+            # Also clean up top-level remote_url if it exists
+            config.pop("remote_url", None)
+            
             save_config(config)
-            init_repo(brain_dir, remote_url)
+            init_repo(interaction_dir, remote_url)
             output = {
                 "status": "success",
                 "message": f"RetroSpark remote URL updated.",
-                "brain_dir": str(brain_dir),
+                "interaction_dir": str(interaction_dir),
                 "remote_url": remote_url[:20] + "..." # Don't leak full token in output
             }
         else:
             output = {
                 "status": "success",
                 "message": "RetroSpark is already initialized.",
-                "brain_dir": str(brain_dir),
+                "interaction_dir": str(interaction_dir),
                 "remote_url": (existing_remote[:20] + "...") if existing_remote else "None",
                 "next_steps": "You are ready to run `retrospark sync`."
             }
@@ -126,16 +134,24 @@ def init(remote_url, skill, force_json):
 
     # First time initialization
     if remote_url:
-        config["remote_url"] = remote_url
+        if not isinstance(github_cfg, dict):
+            github_cfg = {}
+        github_cfg["remote_url"] = remote_url
+        config["github_repo"] = github_cfg
+    
+    # Clean up redundant keys
+    config.pop("remote_url", None)
+    config.pop("antigravity", None)
+    config.pop("output", None)
     
     save_config(config)
     
     # Init Git
-    init_repo(brain_dir, remote_url if remote_url else None)
+    init_repo(interaction_dir, remote_url if remote_url else None)
     
     output = {
         "status": "success",
-        "message": f"RetroSpark initialized. Brain directory at {brain_dir}",
+        "message": f"RetroSpark initialized. Interaction directory at {interaction_dir}",
         "remote_url": (remote_url[:20] + "...") if remote_url else "None",
         "next_steps": "You are ready to run `retrospark sync` to capture sessions."
     }
@@ -143,15 +159,15 @@ def init(remote_url, skill, force_json):
 
 @main.command()
 @click.option("--project", default=None, help="Specific project to sync. Syncs all if omitted.")
-@click.option("--source", required=True, help="Source system (claude, opencode, gemini, all, or custom local path).")
+@click.option("--source", required=True, help="Source system (antigravity, claude, codex, gemini, opencode, openclaw, kimi, all, or custom local path).")
 @click.option("--json", "force_json", is_flag=True, help="Force JSON output for Agent execution.")
 def sync(project, source, force_json):
-    """Extract, parse, format, and sync sessions to the second brain."""
-    brain_dir = get_brain_dir()
+    """Extract, parse, format, and sync sessions to RetroSpark."""
+    interaction_dir = get_interaction_dir()
     anonymizer = Anonymizer()
     
-    if not brain_dir.exists():
-        print_output({"status": "error", "message": "Brain directory not initialized. Run `retrospark init`."}, force_json)
+    if not interaction_dir.exists():
+        print_output({"status": "error", "message": "Interaction directory not initialized. Run `retrospark init`."}, force_json)
         return
 
     # Determine source type (Built-in Enum or Custom Path)
@@ -208,8 +224,8 @@ def sync(project, source, force_json):
         if not sessions:
             continue
             
-        # Target directory inside brain: brain_dir / source / project_name
-        target_dir = brain_dir / proj_source / display_name
+        # Target directory inside interaction: interaction_dir / source / project_name
+        target_dir = interaction_dir / proj_source / display_name
         target_dir.mkdir(parents=True, exist_ok=True)
         
         # Discovery context artifacts for Antigravity
@@ -258,7 +274,7 @@ def sync(project, source, force_json):
         click.secho("🔄 Committing changes to Git...", fg="blue")
         
     # Perform Git Sync
-    sync_result = sync_repo(brain_dir, commit_msg=f"Auto-sync {synced_count} sessions from {source}.")
+    sync_result = sync_repo(interaction_dir, commit_msg=f"Auto-sync {synced_count} sessions from {source}.")
     
     output = {
         "status": "success",

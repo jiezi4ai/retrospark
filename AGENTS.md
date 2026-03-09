@@ -12,15 +12,16 @@ Run the command → read the `status` → follow `next_steps`. That's it.
 ## Commands Reference
 
 ```bash
-retrospark init --json                                               # Initialize brain. Auto-discovers remote URL from root `config.yaml`.
+retrospark init --json                                               # Initialize RetroSpark. Auto-discovers remote URL from root `config.yaml`.
 retrospark init --remote-url "git@github.com:..." --json             # Initialize with an explicit upstream remote.
 retrospark init --skill github_skill --json                          # Initialize and pull remote URL from a specific skill manifest.
-retrospark sync --source antigravity --json                          # Sync Google Antigravity sessions into the brain.
+retrospark sync --source antigravity --json                          # Sync Google Antigravity sessions See `Supervised Export for Antigravity` for more information.
 retrospark sync --source claude --json                               # Sync Claude Code sessions.
 retrospark sync --source gemini --json                               # Sync Gemini CLI sessions.
 retrospark sync --source codex --json                                # Sync Codex sessions.
 retrospark sync --source opencode --json                             # Sync OpenCode sessions.
 retrospark sync --source openclaw --json                             # Sync OpenClaw sessions.
+retrospark sync --source kimi --json                                 # Sync Kimi sessions.
 retrospark sync --source all --json                                  # Sync ALL known integrated AI coding assistants.
 retrospark sync --source /Users/foo/custom_logs --json               # Sync from a custom local directory.
 ```
@@ -50,14 +51,14 @@ Example error response:
 ```json
 {
   "status": "error",
-  "message": "Brain directory not initialized. Run `retrospark init`."
+  "message": "RetroSpark directory not initialized. Run `retrospark init`."
 }
 ```
 
 ## Agent Gotchas
 
 - **Source is Required**: `retrospark sync` will fail if `--source` is not explicitly provided.
-- **Uninitialized Directory**: If the tool says the Brain is not initialized, run `retrospark init --json`.
+- **Uninitialized Directory**: If the tool says the RetroSpark is not initialized, run `retrospark init --json`.
 - **Git Push Failures**: If `git_status` has an error regarding upstream credentials, check if `GITHUB_LLM_SYNC_TOKEN` is correctly set in the environment. RetroSpark will automatically inject it into the remote URL.
 
 ## Supervised Export for Antigravity
@@ -66,9 +67,8 @@ Google Antigravity chat histories are encrypted and cannot be read directly from
 
 **Workflow for Antigravity:**
 
-1. Run `retrospark sync --source antigravity --json`.
-2. If the response indicates `0 sessions` or `0 messages` for a known active session:
+1. Leverage your skill to convert chat history to JSON format as follows:
    - Use the **`antigravity_exporter`** skill (see `.agents/workflows/antigravity_exporter.md`) to export your current memory as JSON.
-   - Save the JSON as `chat_history_<UUID>.json` under  `artifacts` folder.
-   - Re-run `retrospark sync --source antigravity --json`.
-3. RetroSpark will now merge your exported messages with the brain artifacts.
+   - Save the JSON as `chat_history_<UUID>.json` under the hardcoded `artifacts` folder.
+2. Run `retrospark sync --source antigravity --json`.
+3. RetroSpark will now merge your exported messages with the exported JSON in `artifacts`.

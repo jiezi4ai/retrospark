@@ -9,28 +9,12 @@ from retrospark.skills.manager import SkillManager
 ANTIGRAVITY_SOURCE = "antigravity"
 ANTIGRAVITY_DIR = Path.home() / ".gemini" / "antigravity" / "brain"
 
-def get_export_dir() -> Path:
-    """Determine the export directory, checking root config or Skill manifests."""
-    manager = SkillManager(Path.cwd() / "skills")
-    
-    # 1. Check root config.yaml
-    root_config = Path.cwd() / "config.yaml"
-    manifest = manager.load_config(root_config)
-    
-    # 2. Fallback to skill manifest if root config not found or missing history_path
-    if not manifest or not manifest.history_path:
-        manifest = manager.load_manifest("github_skill")
-        
-    if manifest and manifest.history_path:
-        hp = Path(manifest.history_path)
-        if hp.is_absolute():
-            return hp
-        return Path.cwd() / hp
-    
-    # Default fallback
-    return Path.cwd() / "data" / "antigravity" / "conversation"
+# Hardcoded export directory for Antigravity (relative to project root)
+EXPORT_DIR = Path.cwd() / "artifacts"
 
-EXPORT_DIR = get_export_dir()
+def get_export_dir() -> Path:
+    """Returns the hardcoded export directory."""
+    return EXPORT_DIR
 
 def _iter_jsonl(filepath: Path):
     with open(filepath) as f:

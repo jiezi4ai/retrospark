@@ -5,8 +5,8 @@ from pathlib import Path
 PROJECT_ROOT = Path.cwd()
 ROOT_CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 
-# Default brain directory (local to project or custom)
-DEFAULT_BRAIN_DIR = PROJECT_ROOT / ".retrospark" / "brain"
+# Default interaction directory (local to project or custom)
+DEFAULT_INTERACTION_DIR = PROJECT_ROOT / ".retrospark" / "interaction"
 
 def load_config() -> dict:
     """Load configuration from the project-root config.yaml."""
@@ -24,10 +24,6 @@ def save_config(config: dict) -> None:
     with open(ROOT_CONFIG_FILE, "w") as f:
         yaml.safe_dump(config, f, indent=2, sort_keys=False)
 
-def get_brain_dir() -> Path:
-    """Get the brain directory, checking config and providing a default."""
-    config = load_config()
-    brain_dir = config.get("brain_dir")
-    if brain_dir:
-        return Path(brain_dir).resolve()
-    return DEFAULT_BRAIN_DIR
+def get_interaction_dir() -> Path:
+    """Returns the hardcoded interaction directory: ./.retrospark/interaction"""
+    return DEFAULT_INTERACTION_DIR

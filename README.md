@@ -1,22 +1,22 @@
 # RetroSpark
 
-> **Your Local Digital Second Brain**
+> **Review, rethink, reinvent with AI**
 
-RetroSpark captures your conversations, thoughts, and generated code from AI coding assistants and saves them as structured Markdown notes into your personal local repository (automatically versioned with Git).
+RetroSpark (retrospark) captures your conversations, thoughts, and generated code from AI coding assistants and saves them as structured Markdown notes into your personal local repository (automatically versioned with Git).
 
 ## Give this to your agent
 
 Paste the following instructions into your preferred coding agent (e.g. Claude Code, Codex, Gemini CLI, OpenCode, OpenClaw, or Google Antigravity):
 
-```
+```markdown
 Help me export and backup our conversation history using RetroSpark.
 
 STEP 1 — INSTALL OR VERIFY
   Command `retrospark` should be available in the environment.
 
-STEP 2 — INITIALIZE YOUR BRAIN
+STEP 2 — INITIALIZE YOUR RetroSpark
   Run `retrospark init --json`
-  RetroSpark will automatically discover your remote repository from `config.yaml` if present. This configures the local `.retrospark/brain` directory for Markdown storage and Git tracking.
+  RetroSpark will automatically discover your remote repository from `config.yaml` if present. This configures the local `.retrospark/interaction` directory for Markdown storage and Git tracking.
 
 STEP 3 — SYNC SESSIONS
   For manual invocation: `retrospark sync --source <your_ai_tool> --json`
@@ -30,29 +30,57 @@ STEP 3 — SYNC SESSIONS
 IMPORTANT: Always pass the `--json` flag for machine-readable output. 
 ```
 
-## Manual Usage (Without an Agent)
+## Installation
 
-RetroSpark includes built-in TTY/Human detection. If you run `retrospark` commands yourself in the terminal, it outputs beautiful, colored, and formatted conversational text instead of JSON!
+To install RetroSpark locally, clone the repository and run:
+
+```bash
+pip install -e .
+```
+
+## Configuration
+
+RetroSpark uses a `config.yaml` file for its settings. For your privacy, this file is excluded from Git via `.gitignore`.
+
+Follow these steps to set up your configuration:
+
+1. **Create your config file**:
+
+   ```bash
+   cp "config_copy.yaml" config.yaml
+   ```
+
+2. **Setup your repository**: Edit `config.yaml` and update the `github_repo.remote_url` to your own backup repository where you want to save your chat history.
+3. **Set your token**: Ensure the `GITHUB_LLM_SYNC_TOKEN` environment variable is set in your environment with a GitHub Personal Access Token that has repository write access.
 
 ### Quick start
 
 ```bash
-# Initialize your Markdown brain and link a remote Git repo (optional)
+# RetroSpark uses hardcoded standard paths:
+#   - Markdown notes: ./.retrospark/interaction/
+#   - Antigravity exports: ./artifacts/
 retrospark init
 
-# Sync all sessions for a specific AI tool (e.g., Claude Code)
+# Or manually specify an upstream Git repo (overrides config.yaml)
+retrospark init --remote-url "https://github.com/your-username/your-git-repo.git"
+
+# Sync all sessions for a specific AI tool (e.g., Claude Code, Kimi)
 retrospark sync --source claude
+
+retrospark sync --source kimi
 
 # Sync all sessions for Google Antigravity
 retrospark sync --source antigravity
 
 # Sync from a custom local folder containing .jsonl history logs
-retrospark sync --source /path/to/my/custom_logs
+retrospark sync --source /path/to/my/custom_path
 ```
 
 ### Supported Sources
+
 When using `--source`, you must provide the tool's identifier. The recognized sources are:
-- `antigravity` (Google Antigravity Agent)
+
+- `antigravity` (Google Antigravity Agent - **Requires pre-export via `antigravity_exporter` skill due to encryption**)
 - `claude` (Claude Code)
 - `codex` (Codex)
 - `gemini` (Gemini CLI)
@@ -65,7 +93,7 @@ When using `--source`, you must provide the tool's identifier. The recognized so
 ## What gets exported
 
 | Data | Included | Notes |
-|------|----------|-------|
+| :--- | :--- | :--- |
 | User messages | Yes | Full text |
 | Assistant responses | Yes | Full text output |
 | Extended thinking | Yes | Agent Reasoning |
@@ -75,6 +103,7 @@ When using `--source`, you must provide the tool's identifier. The recognized so
 ### Privacy & Redaction
 
 RetroSpark applies multiple layers of protection LOCALLY before generating your Markdown:
+
 1. **Path anonymization** — File paths stripped to relative structures.
 2. **Secret detection** — Regex patterns catch JWT tokens, API keys, private keys, etc.
 3. **Entropy analysis** — Long high-entropy strings in quotes are flagged as potential secrets.
@@ -82,4 +111,5 @@ RetroSpark applies multiple layers of protection LOCALLY before generating your 
 5. **Automated Auth** — RetroSpark automatically detects the `GITHUB_LLM_SYNC_TOKEN` environment variable and injects it into GitHub HTTPS URLs, so you don't have to store plain-text tokens in your config files.
 
 ## License
+
 MIT

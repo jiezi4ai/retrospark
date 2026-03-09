@@ -6,5 +6,5 @@ required_secrets:
   description: Env name for GitHub personal token specified for LLM chat history sync
     with repo access
 github_repo:
-  remote_url: https://github.com/jiezi4ai/chatsparks.git
+  remote_url: https://github.com/your-name/your-repo.git
   description: your corresponding github repo to save conversation history data

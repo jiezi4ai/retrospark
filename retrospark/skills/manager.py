@@ -15,12 +15,16 @@ class SkillManifest:
 
     @property
     def remote_url(self) -> Optional[str]:
+        if isinstance(self.github_repo, dict):
+            return self.github_repo.get("remote_url")
         if self.github_repo and isinstance(self.github_repo, list) and len(self.github_repo) > 0:
             return self.github_repo[0].get("remote_url")
         return None
 
     @property
     def history_path(self) -> Optional[str]:
+        if isinstance(self.antigravity, dict):
+            return self.antigravity.get("history_path")
         if self.antigravity and isinstance(self.antigravity, list) and len(self.antigravity) > 0:
             return self.antigravity[0].get("history_path")
         return None

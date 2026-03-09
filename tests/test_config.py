@@ -7,14 +7,14 @@ from retrospark import config
 @pytest.fixture
 def mock_config_paths(tmp_path, mocker):
     """Mock the configuration paths to use a temporary directory."""
-    config_dir = tmp_path / ".retrospark"
-    config_file = config_dir / "config.json"
-    brain_dir = config_dir / "brain"
+    project_root = tmp_path
+    config_file = project_root / "config.yaml"
+    interaction_dir = project_root / ".retrospark" / "interaction"
     
-    mocker.patch("retrospark.config.CONFIG_DIR", config_dir)
-    mocker.patch("retrospark.config.CONFIG_FILE", config_file)
-    mocker.patch("retrospark.config.DEFAULT_BRAIN_DIR", brain_dir)
-    return config_dir, config_file, brain_dir
+    mocker.patch("retrospark.config.PROJECT_ROOT", project_root)
+    mocker.patch("retrospark.config.ROOT_CONFIG_FILE", config_file)
+    mocker.patch("retrospark.config.DEFAULT_INTERACTION_DIR", interaction_dir)
+    return project_root, config_file, interaction_dir
 
 def test_load_empty_config(mock_config_paths):
     _, config_file, _ = mock_config_paths
@@ -25,7 +25,9 @@ def test_load_empty_config(mock_config_paths):
 
 def test_save_and_load_config(mock_config_paths):
     _, config_file, _ = mock_config_paths
-    test_conf = {"brain_dir": "/tmp/test_brain", "remote_url": "git@github.com:test/repo.git"}
+    test_conf = {
+        "github_repo": {"remote_url": "https://github.com/test/repo.git"}
+    }
     
     config.save_config(test_conf)
     assert config_file.exists()
@@ -33,15 +35,9 @@ def test_save_and_load_config(mock_config_paths):
     loaded = config.load_config()
     assert loaded == test_conf
 
-def test_get_brain_dir_default(mock_config_paths):
-    _, _, expected_brain_dir = mock_config_paths
+def test_get_interaction_dir_default(mock_config_paths):
+    _, _, expected_dir = mock_config_paths
     
-    brain_dir = config.get_brain_dir()
-    assert brain_dir == expected_brain_dir
+    interaction_dir = config.get_interaction_dir()
+    assert interaction_dir == expected_dir
 
-def test_get_brain_dir_custom(mock_config_paths):
-    custom_dir = "/tmp/my_custom_brain"
-    config.save_config({"brain_dir": custom_dir})
-    
-    brain_dir = config.get_brain_dir()
-    assert brain_dir == Path(custom_dir)
