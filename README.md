@@ -79,6 +79,7 @@ RetroSpark applies multiple layers of protection LOCALLY before generating your 
 2. **Secret detection** — Regex patterns catch JWT tokens, API keys, private keys, etc.
 3. **Entropy analysis** — Long high-entropy strings in quotes are flagged as potential secrets.
 4. **Local Git** — Your data never leaves your machine unless you explicitly configure a remote upstream Git payload during `retrospark init`.
+5. **Automated Auth** — RetroSpark automatically detects the `GITHUB_LLM_SYNC_TOKEN` environment variable and injects it into GitHub HTTPS URLs, so you don't have to store plain-text tokens in your config files.
 
 ## License
 MIT

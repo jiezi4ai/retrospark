@@ -87,6 +87,13 @@ def init(remote_url, skill, force_json):
         elif not force_json and sys.stdout.isatty():
             click.secho(f"⚠️  Skill '{skill}' not found or has no remote_url defined.", fg="yellow")
 
+    # 3. Validation: Check if GITHUB_LLM_SYNC_TOKEN is present if needed
+    import os
+    token = os.getenv("GITHUB_LLM_SYNC_TOKEN")
+    if not token and not force_json and sys.stdout.isatty():
+        # Just a warning, not a blocker as user might have a local credential helper
+        click.secho(f"ℹ️  GITHUB_LLM_SYNC_TOKEN not found in environment. Git push might require manual auth.", fg="yellow")
+
     # Check if already initialized
     already_initialized = brain_dir.exists() and (brain_dir / ".git").exists()
     
@@ -96,22 +103,22 @@ def init(remote_url, skill, force_json):
     if already_initialized:
         if remote_url and remote_url != existing_remote:
             if not force_json and sys.stdout.isatty():
-                click.secho(f"🔄 Updating remote URL to: {remote_url}", fg="yellow")
+                click.secho(f"🔄 Updating remote URL to: {remote_url[:20]}...", fg="yellow")
             config["remote_url"] = remote_url
             save_config(config)
             init_repo(brain_dir, remote_url)
             output = {
                 "status": "success",
-                "message": f"RetroSpark remote URL updated to {remote_url}.",
+                "message": f"RetroSpark remote URL updated.",
                 "brain_dir": str(brain_dir),
-                "remote_url": remote_url
+                "remote_url": remote_url[:20] + "..." # Don't leak full token in output
             }
         else:
             output = {
                 "status": "success",
                 "message": "RetroSpark is already initialized.",
                 "brain_dir": str(brain_dir),
-                "remote_url": existing_remote or "None",
+                "remote_url": (existing_remote[:20] + "...") if existing_remote else "None",
                 "next_steps": "You are ready to run `retrospark sync`."
             }
         print_output(output, force_json)
@@ -129,7 +136,7 @@ def init(remote_url, skill, force_json):
     output = {
         "status": "success",
         "message": f"RetroSpark initialized. Brain directory at {brain_dir}",
-        "remote_url": remote_url or "None",
+        "remote_url": (remote_url[:20] + "...") if remote_url else "None",
         "next_steps": "You are ready to run `retrospark sync` to capture sessions."
     }
     print_output(output, force_json)

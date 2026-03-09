@@ -10,10 +10,17 @@ ANTIGRAVITY_SOURCE = "antigravity"
 ANTIGRAVITY_DIR = Path.home() / ".gemini" / "antigravity" / "brain"
 
 def get_export_dir() -> Path:
-    """Determine the export directory, checking Skill manifests first."""
-    # Attempt to load from github_skill manifest
+    """Determine the export directory, checking root config or Skill manifests."""
     manager = SkillManager(Path.cwd() / "skills")
-    manifest = manager.load_manifest("github_skill")
+    
+    # 1. Check root config.yaml
+    root_config = Path.cwd() / "config.yaml"
+    manifest = manager.load_config(root_config)
+    
+    # 2. Fallback to skill manifest if root config not found or missing history_path
+    if not manifest or not manifest.history_path:
+        manifest = manager.load_manifest("github_skill")
+        
     if manifest and manifest.history_path:
         hp = Path(manifest.history_path)
         if hp.is_absolute():
@@ -87,14 +94,15 @@ def parse_project_sessions(project_dir_name: str, anonymizer: Anonymizer, includ
 
     # 1. Try to load from export JSON (Preferred for full chat history)
     if EXPORT_DIR.exists():
-        for export_file in EXPORT_DIR.glob(f"chat_history_{project_dir_name}.json"):
+        pattern = f"chat_history_{project_dir_name}.json"
+        for export_file in EXPORT_DIR.glob(pattern):
             parsed = _parse_antigravity_export_json(export_file, anonymizer, include_thinking)
             if parsed:
                 parsed["project"] = f"antigravity:{project_dir_name[:8]}"
                 parsed["source"] = ANTIGRAVITY_SOURCE
                 sessions.append(parsed)
                 session_ids_processed.add(project_dir_name)
-
+    
     # 2. Fallback or complement with brain logs
     project_path = ANTIGRAVITY_DIR / project_dir_name / ".system_generated" / "logs"
     if project_path.exists():

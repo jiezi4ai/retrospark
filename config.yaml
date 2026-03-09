@@ -1,15 +1,13 @@
-# for github init
-name: "GitHub Issue Manager"
-description: "for github backup of data"
-api_base_url: "https://api.github.com"
+name: GitHub Issue Manager
+description: for github backup of data
+api_base_url: https://api.github.com
 required_secrets:
-  - env_name: "GITHUB_TOKEN"
-    description: "GitHub personal token with repo access"
-github_repo: 
-  - remote_url: "" 
-    description: "your corresponding github repo to save conversation history data"
-
-# for antigravity
+- env_name: GITHUB_LLM_SYNC_TOKEN
+  description: Env name for GitHub personal token specified for LLM chat history sync with repo access
+github_repo:
+- remote_url: https://github.com/jiezi4ai/chatsparks.git
+  description: your corresponding github repo to save conversation history data
 antigravity:
-- history_path: "./artifacts/"
-  description: "path for converted chat history in Json format."
+- history_path: ./artifacts/
+  description: path for converted chat history in Json format.
+remote_url: https://github.com/jiezi4ai/chatsparks.git

@@ -27,9 +27,10 @@ retrospark sync --source /Users/foo/custom_logs --json               # Sync from
 
 ## JSON Output Structure
 
-When executing properly using `--json`, RetroSpark guarantees its `stdout` will purely contain a JSON object. 
+When executing properly using `--json`, RetroSpark guarantees its `stdout` will purely contain a JSON object.
 
 Example success response:
+
 ```json
 {
   "status": "success",
@@ -45,6 +46,7 @@ Example success response:
 ```
 
 Example error response:
+
 ```json
 {
   "status": "error",
@@ -53,18 +55,20 @@ Example error response:
 ```
 
 ## Agent Gotchas
+
 - **Source is Required**: `retrospark sync` will fail if `--source` is not explicitly provided.
 - **Uninitialized Directory**: If the tool says the Brain is not initialized, run `retrospark init --json`.
-- **Git Push Failures**: If `git_status` has an error regarding upstream credentials, inform the user but acknowledge that the Markdown extraction still succeeded locally!
+- **Git Push Failures**: If `git_status` has an error regarding upstream credentials, check if `GITHUB_LLM_SYNC_TOKEN` is correctly set in the environment. RetroSpark will automatically inject it into the remote URL.
 
 ## Supervised Export for Antigravity
 
-Google Antigravity chat histories are encrypted and cannot be read directly from `.pb` logs. 
+Google Antigravity chat histories are encrypted and cannot be read directly from `.pb` logs.
 
 **Workflow for Antigravity:**
+
 1. Run `retrospark sync --source antigravity --json`.
 2. If the response indicates `0 sessions` or `0 messages` for a known active session:
    - Use the **`antigravity_exporter`** skill (see `.agents/workflows/antigravity_exporter.md`) to export your current memory as JSON.
-   - Save the JSON to `data/antigravity/conversation/chat_history_<UUID>.json`.
+   - Save the JSON as `chat_history_<UUID>.json` under  `artifacts` folder.
    - Re-run `retrospark sync --source antigravity --json`.
 3. RetroSpark will now merge your exported messages with the brain artifacts.
