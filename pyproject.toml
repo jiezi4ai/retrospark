@@ -9,7 +9,7 @@ description = "Review, rethink, reinvent with AI."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "RetroSpark Team" }
+    { name = "jiezi4ai" }
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
