@@ -16,9 +16,9 @@ RetroSpark consists of two parts: a **globally installed CLI tool**, and a **pro
 Install the RetroSpark CLI system-wide. This gives your machine the `retrospark` command.
 
 ```bash
-git clone https://github.com/jiezi4ai/retrospark.git
-cd retrospark
-pip install -e .
+pip install retrospark
+# or, for isolated environments:
+pipx install retrospark
 ```
 
 *The CLI is now available globally across your machine.*

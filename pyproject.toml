@@ -16,6 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+keywords = ["ai", "llm", "chat", "history", "claude", "gemini", "agent"]
 dependencies = [
     "click>=8.0.0",
     "PyYAML>=6.0.0",
