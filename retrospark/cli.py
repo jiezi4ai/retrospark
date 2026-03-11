@@ -157,6 +157,72 @@ def init(remote_url, skill, force_json):
     }
     print_output(output, force_json)
 
+@main.command(name="install-skill")
+@click.argument("agent_type", required=True)
+@click.option("--json", "force_json", is_flag=True, help="Force JSON output for Agent execution.")
+def install_skill(agent_type, force_json):
+    """Installs the RetroSpark SKILL.md into the specified agent's local skills directory.
+    AGENT_TYPE can be: claude, codex, antigravity, gemini, opencode, openclaw, kimi, or others.
+    """
+    import shutil
+    
+    agent_types = [agent_type.lower()]
+    if agent_type.lower() == "others":
+        # 'others' maps to all supported generic agents
+        agent_types = [source for source in VALID_SOURCES if source not in ["claude", "codex", "all"]]
+        
+    template_path = Path(__file__).parent / "install_template" / "SKILL.md"
+    if not template_path.exists():
+        print_output({"status": "error", "message": "SKILL.md template not found in package."}, force_json)
+        return
+
+    installed_paths = []
+    
+    for agent in agent_types:
+        if agent not in VALID_SOURCES:
+            if not force_json and sys.stdout.isatty():
+                click.secho(f"⚠️  Skipping unknown agent type '{agent}'. Valid sources are: {VALID_SOURCES}", fg="yellow")
+            continue
+            
+        if agent == "claude":
+            dest_dir = Path.cwd() / ".claude" / "skills" / "retrospark"
+        elif agent == "codex":
+            dest_dir = Path.cwd() / ".codex" / "skills" / "retrospark"
+        else:
+            # Universal standard for Agent Skills
+            dest_dir = Path.cwd() / ".agents" / "skills" / "retrospark"
+            
+        try:
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            dest_file = dest_dir / "SKILL.md"
+            shutil.copy2(template_path, dest_file)
+            installed_paths.append(str(dest_file))
+        except Exception as e:
+            if not force_json and sys.stdout.isatty():
+                click.secho(f"❌ Failed to install for {agent}: {e}", fg="red", err=True)
+            elif force_json:
+                print_output({"status": "error", "message": f"Failed to install for {agent}: {e}"}, force_json)
+                return
+                
+    if not installed_paths:
+        print_output({"status": "error", "message": "No skills were installed. Please specify a valid agent type."}, force_json)
+        return
+        
+    output = {
+        "status": "success",
+        "message": f"Successfully installed RetroSpark skill for {len(installed_paths)} agent(s).",
+        "installed_paths": installed_paths,
+        "next_steps": "You can now ask your Agent to 'sync my retrospark history'."
+    }
+    
+    if force_json or not sys.stdout.isatty():
+        print_output(output, force_json)
+    else:
+        click.secho("✅ " + str(output.get("message", "")), fg="green")
+        for p in installed_paths:
+            click.secho(f"   Installed to: {p}", fg="cyan")
+        click.secho(f"➡️  Next Steps: {output['next_steps']}", fg="yellow")
+
 @main.command()
 @click.option("--project", default=None, help="Specific project to sync. Syncs all if omitted.")
 @click.option("--source", required=True, help="Source system (antigravity, claude, codex, gemini, opencode, openclaw, kimi, all, or custom local path).")
@@ -210,7 +276,7 @@ def sync(project, source, force_json):
     for p in projects_to_sync:
         dir_name = p.get("dir_name")
         proj_source = p.get("source")
-        display_name = p.get("display_name", Path(dir_name).name).replace(":", "_").replace(" ", "_")
+        display_name = p.get("display_name", Path(str(dir_name)).name if dir_name else "unknown_project").replace(":", "_").replace(" ", "_")
         
         if not force_json and sys.stdout.isatty():
             click.echo(f"  ⏳ Parsing {display_name} ({proj_source})...")

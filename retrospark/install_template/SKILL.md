@@ -1,13 +1,15 @@
 ---
 name: retrospark
-description: Review, rethink, reinvent with AI. Saves your current conversation state, thoughts, and extracted code as structured Markdown notes into the user's local digital repository (automatically versioned with Git).
+description: >
+  Review, rethink, reinvent with AI. Captures your conversations, thoughts, and generated code from AI assistants and saves them as structured Markdown notes into your personal local repository (automatically versioned with Git). Use this when the user asks to "save my progress", "export our chat", "archive this session", "take a note of this", "sync history", "dump conversation", or "backup chat". This skill locally executes the retrospark CLI to format and commit the history.
+allowed-tools: Bash, Write, Edit
 ---
 
 # RetroSpark: Review, rethink, reinvent with AI
 
 ## 🌟 When to Use
 
-Use `retrospark` when the user explicitly asks you to "save my progress", "export our chat", "archive this session", or "take a note of this". The user relies on this tool to build a long-term knowledge base.
+Use `retrospark` when the user explicitly asks you to "save my progress", "export our chat", "archive this session", or "take a note of this". The user relies on this tool to build a long-term knowledge base from their AI conversations.
 
 ## ⚙️ How it Works
 

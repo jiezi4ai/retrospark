@@ -1,72 +1,89 @@
 # RetroSpark
 
-> **Review, rethink, reinvent with AI**
+> **Review, rethink, reinvent with AI.**
+> RetroSpark captures your conversations, thoughts, and generated code from AI coding assistants and saves them as structured Markdown notes into your personal local repository (automatically versioned with Git).
 
-RetroSpark (retrospark) captures your conversations, thoughts, and generated code from AI coding assistants and saves them as structured Markdown notes into your personal local repository (automatically versioned with Git).
+Turn your **Google Antigravity**, Claude Code, Codex, Gemini CLI, OpenCode, OpenClaw, and Kimi conversation history into beautiful, organized Markdown and sync it to a private Git repository with a single command. RetroSpark parses session logs, redacts secrets and PII, and outputs a ready-to-view knowledge base.
 
-## Give this to your agent
+---
 
-Paste the following instructions into your preferred coding agent (e.g. Claude Code, Codex, Gemini CLI, OpenCode, OpenClaw, or Google Antigravity):
+## 🚀 Quick Start: Installation & Setup
 
-```markdown
-Help me export and backup our conversation history using RetroSpark.
+RetroSpark consists of two parts: a **globally installed CLI tool**, and a **project-level Agent Skill** (so your AI actually knows how to use the CLI).
 
-STEP 1 — INSTALL OR VERIFY
-  Command `retrospark` should be available in the environment.
+### STEP 1 — INSTALL THE CLI (GLOBAL)
 
-STEP 2 — INITIALIZE YOUR RetroSpark
-  Run `retrospark init --json`
-  RetroSpark will automatically discover your remote repository from `config.yaml` if present. This configures the local `.retrospark/interaction` directory for Markdown storage and Git tracking.
-
-STEP 3 — SYNC SESSIONS
-  For manual invocation: `retrospark sync --source <your_ai_tool> --json`
-  (e.g., `retrospark sync --source claude --json`, `retrospark sync --source antigravity --json`)
-   RetroSpark will scan history logs, sanitize PII, integrate project artifacts (plans, logs) into the final Markdown, and Git Commit + Push automatically.
-  
-  Read the JSON output:
-  - If `status == "success"`, inform the user that the sync is complete.
-  - If `status == "error"`, read the `message` field and inform the user of the failure.
-
-IMPORTANT: Always pass the `--json` flag for machine-readable output. 
-```
-
-## Installation
-
-To install RetroSpark locally, clone the repository and run:
+Install the RetroSpark CLI system-wide. This gives your machine the `retrospark` command.
 
 ```bash
+git clone https://github.com/jiezi4ai/retrospark.git
+cd retrospark
 pip install -e .
 ```
 
-## Configuration
+*The CLI is now available globally across your machine.*
 
-RetroSpark uses a `config.yaml` file for its settings. For your privacy, this file is excluded from Git via `.gitignore`.
+### STEP 2 — INSTALL THE SKILL (LOCAL TO PROJECT)
 
-Follow these steps to set up your configuration:
+AI Coding Agents operate contextually. To let your Agent know about RetroSpark, you must "install the skill" into your current project folder.
 
-1. **Create your config file**:
-
-   ```bash
-   cp "config_copy.yaml" config.yaml
-   ```
-
-2. **Setup your repository**: Edit `config.yaml` and update the `github_repo.remote_url` to your own backup repository where you want to save your chat history.
-3. **Set your token**: Ensure the `GITHUB_LLM_SYNC_TOKEN` environment variable is set in your environment with a GitHub Personal Access Token that has repository write access.
-
-### Quick start
+Run this command **in any project directory** where you plan to use an AI Assistant:
 
 ```bash
-# RetroSpark uses hardcoded standard paths:
-#   - Markdown notes: ./.retrospark/interaction/
-#   - Antigravity exports: ./artifacts/
+# For Claude Code
+retrospark install-skill claude
+
+# For Google Antigravity, Gemini CLI, OpenCode, etc. (Open Standard Agent Skills)
+retrospark install-skill antigravity
+
+# Or, just install for all other known local agents at once
+retrospark install-skill others
+```
+
+**🤔 What did this just do?**
+This command simply unpacks a tiny `SKILL.md` instruction file into your current project's hidden agent folder (like `.claude/skills/retrospark/SKILL.md` or `.agents/skills/retrospark/SKILL.md`).
+
+- **Global Tool:** `retrospark` runs anywhere.
+- **Local Skill:** The Agent only "sees" the tool if the `SKILL.md` is in its current workspace. If you switch to a brand new project tomorrow, just run `retrospark install-skill others` again to give the Agent knowledge of the tool there.
+
+### STEP 3 — INITIAL CONFIGURATION
+
+RetroSpark needs to know where to backup your chats. 
+Create your configuration file in the project directory, or globally at `~/.retrospark/config.yaml`:
+
+```bash
+cp "config_copy.yaml" config.yaml
+```
+
+Edit `config.yaml` to update `github_repo.remote_url` to your private backup repository.
+Ensure the `GITHUB_LLM_SYNC_TOKEN` environment variable is exported in your shell with a GitHub Personal Access Token (with repo write access).
+
+### STEP 4 — START USING IT
+
+Just talk to your agent. Say:
+> **"Please save my progress"**
+> *or* **"Export our chat history"**
+
+The Agent will automatically read the local `SKILL.md` and trigger the global `retrospark sync` command to process and backup your conversation.
+
+---
+
+<details>
+<summary><b>Manual usage (without an agent) / Advanced Configuration</b></summary>
+
+## Manual Commands
+
+You can run RetroSpark entirely manually.
+
+```bash
+# Initialize inside a data folder
 retrospark init
 
 # Or manually specify an upstream Git repo (overrides config.yaml)
 retrospark init --remote-url "https://github.com/your-username/your-git-repo.git"
 
-# Sync all sessions for a specific AI tool (e.g., Claude Code, Kimi)
+# Sync all sessions for a specific AI tool
 retrospark sync --source claude
-
 retrospark sync --source kimi
 
 # Sync all sessions for Google Antigravity
@@ -90,7 +107,39 @@ When using `--source`, you must provide the tool's identifier. The recognized so
 - `all` (Scans and extracts from all supported native tools automatically)
 - `<local_folder_path>` (Any absolute or relative path to a directory containing `.jsonl` session files)
 
-## What gets exported
+</details>
+
+<details>
+<summary><b>Alternative: Manual Prompt Injection</b></summary>
+
+If you do not wish to install the skill globally using `retrospark install-skill`, you can manually paste the following instructions into your agent to force it to use it:
+
+```markdown
+Help me export and backup our conversation history using RetroSpark.
+
+STEP 1 — VERIFY ENVIRONMENT
+  Check if `retrospark` is available in the environment path. If not, stop and inform the user to install it.
+
+STEP 2 — INITIALIZE YOUR RetroSpark
+  Run `retrospark init --json`
+  RetroSpark will automatically discover your remote repository from `config.yaml` if present. This configures the local `.retrospark/interaction` directory for Markdown storage and Git tracking.
+
+STEP 3 — SYNC SESSIONS
+  For manual invocation: `retrospark sync --source <your_ai_tool> --json`
+  (e.g., `retrospark sync --source claude --json`)
+   RetroSpark will scan history logs, sanitize PII, integrate project artifacts, and Git Commit + Push automatically.
+  
+  Read the JSON output:
+  - If `status == "success"`, inform the user that the sync is complete.
+  - If `status == "error"`, read the `message` field and inform the user of the failure.
+
+IMPORTANT: Always pass the `--json` flag for machine-readable output. 
+```
+
+</details>
+
+<details>
+<summary><b>Privacy & What gets exported</b></summary>
 
 | Data | Included | Notes |
 | :--- | :--- | :--- |
@@ -109,6 +158,8 @@ RetroSpark applies multiple layers of protection LOCALLY before generating your 
 3. **Entropy analysis** — Long high-entropy strings in quotes are flagged as potential secrets.
 4. **Local Git** — Your data never leaves your machine unless you explicitly configure a remote upstream Git payload during `retrospark init`.
 5. **Automated Auth** — RetroSpark automatically detects the `GITHUB_LLM_SYNC_TOKEN` environment variable and injects it into GitHub HTTPS URLs, so you don't have to store plain-text tokens in your config files.
+
+</details>
 
 ## License
 

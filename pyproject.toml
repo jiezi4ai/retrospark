@@ -31,3 +31,6 @@ retrospark = "retrospark.cli:main"
 where = ["."]
 include = ["retrospark*"]
 exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+retrospark = ["install_template/*.md"]

@@ -15,6 +15,9 @@ Run the command → read the `status` → follow `next_steps`. That's it.
 retrospark init --json                                               # Initialize RetroSpark. Auto-discovers remote URL from root `config.yaml`.
 retrospark init --remote-url "git@github.com:..." --json             # Initialize with an explicit upstream remote.
 retrospark init --skill github_skill --json                          # Initialize and pull remote URL from a specific skill manifest.
+retrospark install-skill claude --json                               # Install the RetroSpark skill to the local Claude Code workspace.
+retrospark install-skill antigravity --json                          # Install the RetroSpark skill to the local Antigravity workspace.
+retrospark install-skill others --json                               # Install the RetroSpark skill to all supported local agent workspaces.
 retrospark sync --source antigravity --json                          # Sync Google Antigravity sessions See `Supervised Export for Antigravity` for more information.
 retrospark sync --source claude --json                               # Sync Claude Code sessions.
 retrospark sync --source gemini --json                               # Sync Gemini CLI sessions.
